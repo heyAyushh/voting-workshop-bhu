@@ -34,6 +34,16 @@ pub mod voting {
     }
 
     pub fn vote(ctx: Context<Vote>, _candidate_name: String, _poll_id: u64) -> Result<()> {
+        // Check if the participant has already cast a ballot
+        let participation_record = &mut ctx.accounts.participation_record;
+        if participation_record.has_participated {
+            return Err(error!(ProgramError::DuplicateVoteAttempt));
+        }
+
+        // Mark as participated and save reference
+        participation_record.has_participated = true;
+        participation_record.poll_reference = ctx.accounts.poll.key();
+
         let candidate = &mut ctx.accounts.candidate;
         candidate.candidate_votes += 1;
 
@@ -53,7 +63,7 @@ pub struct Vote<'info> {
     #[account(
         seeds = [poll_id.to_le_bytes().as_ref()],
         bump
-      )]
+    )]
     pub poll: Account<'info, Poll>,
 
     #[account(
@@ -62,6 +72,15 @@ pub struct Vote<'info> {
       bump
     )]
     pub candidate: Account<'info, Candidate>,
+
+    #[account(
+      init_if_needed,
+      payer = signer,
+      space = 8 + ParticipationRecord::INIT_SPACE,
+      seeds = [poll_id.to_le_bytes().as_ref(), signer.key().as_ref()],
+      bump
+    )]
+    pub participation_record: Account<'info, ParticipationRecord>,
 
     pub system_program: Program<'info, System>,
 }
@@ -124,4 +143,17 @@ pub struct Poll {
     pub poll_start: u64,
     pub poll_end: u64,
     pub candidate_amount: u64,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct ParticipationRecord {
+    pub has_participated: bool,
+    pub poll_reference: Pubkey,
+}
+
+#[error_code]
+pub enum ProgramError {
+    #[msg("This wallet has already participated in the current poll.")]
+    DuplicateVoteAttempt,
 }

@@ -175,6 +175,22 @@ export type Voting = {
           }
         },
         {
+          "name": "participationRecord",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "arg",
+                "path": "pollId"
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
@@ -206,6 +222,19 @@ export type Voting = {
       ]
     },
     {
+      "name": "participationRecord",
+      "discriminator": [
+        237,
+        203,
+        52,
+        80,
+        205,
+        129,
+        224,
+        8
+      ]
+    },
+    {
       "name": "poll",
       "discriminator": [
         110,
@@ -217,6 +246,13 @@ export type Voting = {
         153,
         111
       ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "duplicateVoteAttempt",
+      "msg": "This wallet has already participated in the current poll."
     }
   ],
   "types": [
@@ -232,6 +268,22 @@ export type Voting = {
           {
             "name": "candidateVotes",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "participationRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "hasParticipated",
+            "type": "bool"
+          },
+          {
+            "name": "pollReference",
+            "type": "pubkey"
           }
         ]
       }

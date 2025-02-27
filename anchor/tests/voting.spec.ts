@@ -2,6 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { BankrunProvider, startAnchor } from "anchor-bankrun";
 import { Voting } from "../target/types/voting";
+import { AnchorError } from "@coral-xyz/anchor";
 
 const IDL = require("../target/idl/voting.json");
 const PROGRAM_ID = new PublicKey(IDL.address);
@@ -102,5 +103,39 @@ describe("Voting", () => {
     console.log(blueCandidate);
     expect(blueCandidate.candidateVotes.toNumber()).toBe(1);
     expect(blueCandidate.candidateName).toBe("Blue");
+  });
+
+  it("rejects multiple votes by same person", async () => {
+    // initialize a new poll with poll_id 2
+    await votingProgram.methods.initializePoll(
+      new anchor.BN(2),
+      "Test poll for multiple votes",
+      new anchor.BN(100),
+      new anchor.BN(200),
+    ).rpc();
+
+    // initialize candidate "Green" for poll_id 2
+    await votingProgram.methods.initializeCandidate(
+      "Green",
+      new anchor.BN(2),
+    ).rpc();
+
+    // first vote should succeed
+    await votingProgram.methods.vote(
+      "Green",
+      new anchor.BN(2),
+    ).rpc();
+
+    // second vote by the same signer should fail
+    try {
+      await votingProgram.methods.vote(
+        "Green",
+        new anchor.BN(2),
+      ).rpc();
+      throw new Error("Second vote was accepted, but it should be rejected.");
+    } catch (err : any) {
+      err = err as AnchorError;
+      expect(err.error.errorMessage).toBe("This wallet has already participated in the current poll.");
+    }
   });
 });
