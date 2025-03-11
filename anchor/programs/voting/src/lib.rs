@@ -8,12 +8,13 @@ declare_id!("coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF");
 pub mod voting {
     use super::*;
 
-    pub fn initialize_poll(ctx: Context<InitializePoll>, 
-                            poll_id: u64,
-                            description: String,
-                            poll_start: u64,
-                            poll_end: u64) -> Result<()> {
-
+    pub fn initialize_poll(
+        ctx: Context<InitializePoll>,
+        poll_id: u64,
+        description: String,
+        poll_start: u64,
+        poll_end: u64,
+    ) -> Result<()> {
         let poll = &mut ctx.accounts.poll;
         poll.poll_id = poll_id;
         poll.description = description;
@@ -24,10 +25,11 @@ pub mod voting {
         Ok(())
     }
 
-    pub fn initialize_candidate(ctx: Context<InitializeCandidate>, 
-                                candidate_name: String,
-                                _poll_id: u64
-                            ) -> Result<()> {
+    pub fn initialize_candidate(
+        ctx: Context<InitializeCandidate>,
+        candidate_name: String,
+        _poll_id: u64,
+    ) -> Result<()> {
         let candidate = &mut ctx.accounts.candidate;
         let poll = &mut ctx.accounts.poll;
         poll.candidate_amount += 1;
@@ -35,6 +37,7 @@ pub mod voting {
         candidate.candidate_votes = 0;
         Ok(())
     }
+
 
     pub fn vote(ctx: Context<Vote>, _candidate_name: String, _poll_id: u64) -> Result<()> {
         let candidate = &mut ctx.accounts.candidate;
@@ -45,8 +48,16 @@ pub mod voting {
         msg!("Votes: {}", candidate.candidate_votes);
         Ok(())
     }
+  }
 
-}
+  #[error_code]
+  pub enum VotingError {
+    #[msg("The poll has not started yet.")]
+    PollNotStarted,
+
+    #[msg("The poll has already ended.")]
+    PollEnded,
+  }
 
 #[derive(Accounts)]
 #[instruction(candidate_name: String, poll_id: u64)]
@@ -69,7 +80,6 @@ pub struct Vote<'info> {
 
     pub system_program: Program<'info, System>,
 }
-
 
 #[derive(Accounts)]
 #[instruction(candidate_name: String, poll_id: u64)]
