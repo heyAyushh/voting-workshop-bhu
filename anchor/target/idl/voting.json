@@ -169,6 +169,22 @@
           }
         },
         {
+          "name": "participation_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "arg",
+                "path": "poll_id"
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -200,6 +216,19 @@
       ]
     },
     {
+      "name": "ParticipationRecord",
+      "discriminator": [
+        237,
+        203,
+        52,
+        80,
+        205,
+        129,
+        224,
+        8
+      ]
+    },
+    {
       "name": "Poll",
       "discriminator": [
         110,
@@ -211,6 +240,13 @@
         153,
         111
       ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "DuplicateVoteAttempt",
+      "msg": "This wallet has already participated in the current poll."
     }
   ],
   "types": [
@@ -226,6 +262,22 @@
           {
             "name": "candidate_votes",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ParticipationRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "has_participated",
+            "type": "bool"
+          },
+          {
+            "name": "poll_reference",
+            "type": "pubkey"
           }
         ]
       }
