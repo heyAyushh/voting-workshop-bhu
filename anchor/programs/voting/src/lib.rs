@@ -16,6 +16,13 @@ pub mod voting {
         poll_end: u64,
     ) -> Result<()> {
         let poll = &mut ctx.accounts.poll;
+        let clock = Clock::get()?;
+        if poll_start > poll_end as u64 {
+            return Err(ErrorCode::PollStartAfterEnd.into());
+        }
+        if poll_end <= clock.unix_timestamp as u64 {
+            return Err(ErrorCode::PollEndInPast.into());
+        }
         poll.poll_id = poll_id;
         poll.description = description;
         poll.poll_start = poll_start;
@@ -23,6 +30,13 @@ pub mod voting {
         poll.candidate_amount = 0;
         poll.total_votes = 0;
         Ok(())
+    }
+    #[error_code]
+    pub enum ErrorCode {
+        #[msg("The poll end time must be in the future.")]
+        PollEndInPast,
+        #[msg("The poll start time must be before the end time.")]
+        PollStartAfterEnd,
     }
 
     pub fn initialize_candidate(
